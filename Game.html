@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title> Galaga Game</title>
+
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+
+<body>
+    <canvas id="myCanvas" width="350" height="500"></canvas>
+    
+    <script>
+        var canvas = document.getElementById("myCanvas"); 
+        var ctx = canvas.getContext("2d");
+
+        var targetimage;
+        var move = 0;
+        var tmp = -1;
+
+        var rightPressed = false;
+        var leftPressed = false;
+        var spacePressed = false;
+
+        var bkg1 = new Image();
+        bkg1.src = "background1.png";
+        var bkg2 = new Image();
+        bkg2.src = "background2.png";
+        var bkg3 = new Image();
+        bkg3.src = "background3.png";
+
+        var planeWidth = 40;
+        var planeHeigth = 40;
+        var planeX = (canvas.width - planeWidth) / 2;
+
+        var plane = new Image();
+        plane.src = "plane.png";
+
+        var targetRowCount = 1;
+        var targetColumnCount = 5;
+        var targetWidth = 30;
+        var targetHeight = 30;
+        var targetPadding = 35;
+        var targetOffsetTop = 30;
+        var targetOffserLeft = 30;
+
+        var butterfly = new Image();
+        butterfly.src = "butterfly.png";
+        var bee = new Image();
+        bee.src = "bee.png";
+        var dragonfly = new Image();
+        dragonfly.src = "dragonfly.png";
+
+        var score = 0;
+        var lives = 3;
+        var stage = 1;
+
+        var ballArr = new Array();
+        var idx = 0;
+
+        var targetArr1 = new Array();
+        var targetArr2 = new Array();
+        var targetArr3 = new Array();
+
+        var index1 = 0;
+        var index2 = 0;
+        var index3 = 0;
+
+        var initscore = 0;
+
+        var targets = [];
+        for (var c = 0; c < targetColumnCount; c++) {
+            targets[c] = [];
+            for (var r = 0; r < targetRowCount; r++) {
+                targets[c][r] = { x: 0, y: 0, status: 1 };
+            }
+        }
+
+        document.addEventListener("keydown", keyDownHandler, false);
+        document.addEventListener("keyup", keyUpHandler, false);
+
+
+        function keyDownHandler(e) {
+            if (e.keyCode == 39) {
+                rightPressed = true;
+            }
+            else if (e.keyCode == 37) {
+                leftPressed = true;
+            }
+
+            if (e.keyCode == 32) {
+                spacePressed = true;
+            }
+
+        }
+
+        function keyUpHandler(e) {
+            if (e.keyCode == 39) {
+                rightPressed = false;
+            }
+            else if (e.keyCode == 37) {
+                leftPressed = false;
+            }
+
+            if (e.keyCode == 32) {
+                spacePressed = false;
+            }
+
+        }
+
+        function StartshowAlert() {
+            alert("갤러그 게임 플레이장에 오신것을 환영합니다\n이 게임은 총 3개의 스테이지로 구성되어있습니다\n\n 본 게임을 재밌게 즐겨주세요:)");
+        }
+
+        function EndshowAlert() {
+            alert("갤러그 게임이 종료되었습니다\n갤러그 게임 재밌게 즐기셨나요? \n\n빨리 끝나서 아쉽다면 확인을 눌러주세요 자동으로 게임이 재시작됩니다:)");
+        }
+
+
+        function Ball(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        function drawBall(x, y) {
+
+            ctx.beginPath();
+            ctx.arc(x, y, 3, 0, Math.PI * 2);
+            ctx.fillStyle = "white";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function targetBall(x, y) {
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, Math.PI * 2);
+            ctx.fillStyle = "Red";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+
+        function drawBackground() {
+            if (stage == 1) {
+                ctx.drawImage(bkg1, 0, 0);
+            }
+            else if (stage == 2) {
+                ctx.drawImage(bkg2, 0, 0);
+            }
+            else if (stage == 3) {
+                ctx.drawImage(bkg3, 0, 0);
+            }
+        }
+
+        function drawPlane() {
+            ctx.beginPath();
+            ctx.drawImage(plane, planeX, canvas.height - planeHeigth);
+            ctx.closePath();
+        }
+
+
+        function drawTargets() {
+            for (var c = 0; c < targetColumnCount; c++) {
+                for (var r = 0; r < targetRowCount; r++) {
+                    if (targets[c][r].status == 1) {
+                        if (c % 2 == 0 && r % 2 == 0 || c % 2 != 0 && r % 2 != 0) {
+                            var targetX = (c * (targetWidth + targetPadding)) + targetOffserLeft + move;
+                            var targetY = (r * (targetHeight + targetPadding)) + targetOffsetTop + move;
+                            targets[c][r].x = targetX;
+                            targets[c][r].y = targetY;
+                        }
+
+                        else if(c % 2 == 0 && r % 2 != 0 || c % 2 != 0 && r % 2 == 0){
+                            var targetX = (c * (targetWidth + targetPadding)) + targetOffserLeft - move;
+                            var targetY = (r * (targetHeight + targetPadding)) + targetOffsetTop - move;
+                            targets[c][r].x = targetX;
+                            targets[c][r].y = targetY;
+                        }
+
+
+                        if (stage == 1) {
+                            var targetX = (c * (targetWidth + targetPadding)) + targetOffserLeft + move;
+                            var targetY = (r * (targetHeight + targetPadding)) + targetOffsetTop;
+                            targets[c][r].x = targetX;
+                            targets[c][r].y = targetY;
+                            targetimage = butterfly;
+                        }
+
+                        else if (stage == 2) {
+
+
+
+                            if (c % 2 != 0 && r % 2 == 0 || c % 2 == 0 && r % 2 != 0) {
+                                targetimage = bee;
+                            }
+                            else {
+                                targetimage = butterfly;
+                            }
+                        }
+
+
+
+                        else if (stage == 3) {
+
+                            if (c % 2 == 0 && r % 2 == 0 || c % 2 != 0 && r % 2 != 0) {
+                                var targetX = (c * (targetWidth + targetPadding)) + targetOffserLeft - move;
+                                var targetY = (r * (targetHeight + targetPadding)) + targetOffsetTop + move;
+                                targets[c][r].x = targetX;
+                                targets[c][r].y = targetY;
+                            }
+
+
+                            if (c % 2 != 0 && r % 2 != 0 || c % 2 == 0 && r % 2 == 0) {
+                                targetimage = dragonfly;
+                            }
+                            else if (c % 2 != 0 && r % 2 == 0 || c % 2 == 0 && r % 2 != 0) {
+                                targetimage = bee;
+                            }
+                            else {
+                                targetimage = butterfly;
+                            }
+                        }
+
+
+                        ctx.beginPath();
+                        ctx.drawImage(targetimage, targetX, targetY);
+                        ctx.closePath();
+                    }
+
+                }
+            }
+        }
+
+        function drawScore() {
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "silver";
+            ctx.fillText("Score: " + score, 8, 20);
+        }
+        function drawLives() {
+            ctx.font = "16px Arial";
+            ctx.fillStyle = "silver";
+            ctx.fillText("Lives: " + lives, canvas.width - 65, 20);
+        }
+
+        function drawStage() {
+            ctx.font = "20px Arial";
+            ctx.fillStyle = "white";
+            ctx.fillText("Stage: " + stage, canvas.width / 2 - 32, 20);
+        }
+
+
+
+
+        function nextstage() {
+
+            if (stage > 3) {
+                alert("모든 스테이지를 클리어하셨습니다! 축하드립니다~");
+                EndshowAlert();
+                document.location.reload();
+            }
+            else {
+                alert("이겼습니다! => 다음 스테이지로 이동합니다!");
+                initscore = 0;
+                targetRowCount++;
+
+                for (var c = 0; c < targetColumnCount; c++) {
+                    targets[c] = [];
+                    for (var r = 0; r < targetRowCount; r++) {
+                        targets[c][r] = { x: 0, y: 0, status: 1 };
+                    }
+                }
+            }
+
+        }
+
+
+
+
+
+        function collisionDetection(tx, ty) {
+            for (var c = 0; c < targetColumnCount; c++) {
+                for (var r = 0; r < targetRowCount; r++) {
+                    var t = targets[c][r];
+                    if (t.status == 1) {
+
+                        if (tx > t.x && tx < t.x + targetWidth && ty > t.y && ty < t.y + targetHeight) {
+                            t.status = 0;
+                            score += 10;
+                            initscore++;
+                            if (initscore == targetRowCount * targetColumnCount) {
+                                stage++;
+                                nextstage();
+                            }
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+
+        function planeFall(tx, ty) {
+            if (tx > planeX && tx < planeX + planeWidth && ty > canvas.height - planeHeigth && ty < canvas.height - planeHeigth + planeHeigth) {
+                lives--;
+                if (!lives) {
+                    alert("졌습니다.. 게임 오버!");
+                    alert("총 점수는 " + score + "입니다!");
+                    EndshowAlert();
+                    document.location.reload();
+                }
+                return true;
+            }
+        }
+
+        function draw() {
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawBackground();
+            drawTargets();
+            drawPlane();
+            drawScore();
+            drawStage();
+            drawLives();
+
+
+            if (move < -(targetOffserLeft - 10) || move > (targetOffserLeft - 10)) {
+                tmp = -tmp;
+            }
+            move += tmp;
+
+            for (var i = 0; i < ballArr.length; i++) {
+                if (collisionDetection(ballArr[i].x, ballArr[i].y)) {
+                    ballArr[i] = 0;
+                }
+
+                if (i % 10 == 0) {
+                    drawBall(ballArr[i].x + 20, ballArr[i].y);
+                    ballArr[i].y -= 15;
+                }
+
+                if (idx > 100) {
+                    idx = 0;
+                }
+            }
+
+
+            for (var i = 0; i < targetArr1.length; i++) {
+                if (planeFall(targetArr1[i].x, targetArr1[i].y)) {
+                    targetArr1[i] = 0;
+                }
+
+
+                if (i % 301 == 0) {
+                    targetBall(targetArr1[i].x + 15, targetArr1[i].y + 23);
+                    targetArr1[i].y += 2;
+                }
+
+                if (index1 > 3000) {
+                    index1 = 0;
+                }
+
+            }
+
+            for (var i = 0; i < targetArr2.length; i++) {
+
+                if (planeFall(targetArr2[i].x, targetArr2[i].y)) {
+                    targetArr2[i] =0;
+                }
+
+                if (i % 201 == 0) {
+                    targetBall(targetArr2[i].x + 15, targetArr2[i].y + 23);
+                    targetArr2[i].y += 2;
+                }
+
+                if (index2 > 3000) {
+                    index2 = 0;
+                }
+
+            }
+
+
+            for (var i = 0; i < targetArr3.length; i++) {
+
+                if (planeFall(targetArr3[i].x, targetArr3[i].y)) {
+                    targetArr3[i] = 0;
+                }
+
+                if (i % 151 == 0) {
+                    targetBall(targetArr3[i].x + 15, targetArr3[i].y + 23);
+                    targetArr3[i].y += 2;
+                }
+
+                if (index3 > 3000) {
+                    index3 = 0;
+                }
+
+            }
+
+
+            if (rightPressed && planeX < canvas.width - planeWidth) {
+                if (stage == 1) {
+                    planeX += 3;
+                }
+                else if (stage == 2) {
+                    planeX += 4;
+                }
+                else if (stage == 3) {
+                    planeX += 5;
+                }
+
+            }
+            else if (leftPressed && planeX > 10) {
+                if (stage == 1) {
+                    planeX -= 3;
+                }
+                else if (stage == 2) {
+                    planeX -= 4;
+                }
+                else if (stage == 3) {
+                    planeX -= 5;
+                }
+            }
+
+            if (spacePressed) {
+                ballArr[idx] = new Ball(planeX, canvas.height - planeHeigth);
+                idx++;
+            }
+
+
+
+            for (var c = 0; c < targetColumnCount; c++) {
+                for (var r = 0; r < targetRowCount; r++) {
+                    var t = targets[c][r];
+                    if (t.status == 1) {
+                        if (c % 2 != 0 && r % 2 != 0 || c % 2 == 0 && r % 2 == 0) {
+                            targetArr3[index3] = new Ball(t.x, t.y);
+                            index3++;
+                        }
+
+                        else if (c % 2 != 0 && r % 2 == 0 || c % 2 == 0 && r % 2 != 0) {
+                            targetArr2[index2] = new Ball(t.x, t.y);
+                            index2++;
+                        }
+
+                        else {
+                            targetArr1[index1] = new Ball(t.x, t.y);
+                            index1++;
+                        }
+
+                    }
+
+                }
+            }
+
+
+            requestAnimationFrame(draw);
+        }
+        StartshowAlert();
+        draw();
+        
+
+    </script>
+
+</body>
+
+</html>
